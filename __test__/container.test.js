@@ -58,10 +58,14 @@ describe("test the container", () => {
         this.userName = singletonB;
       }
     };
-    container.register("c", c, ["user"]);
-    container.register("user", user, ["c"]);
-    const userInstance = container.get("user");
-    expect(userInstance.userName.name).toBeInstanceOf(user);
+    try {
+      container.register("c", c, ["user"]);
+      container.register("user", user, ["c"]);
+      const userInstance = container.get("user");
+      userInstance.userName.name;
+    } catch (e) {
+      expect(e).toBe("Circular dependency has been found for user service.");
+    }
   });
   it("when the dependency is not registered in container", () => {
     const container = new Container();
