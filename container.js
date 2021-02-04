@@ -22,11 +22,9 @@ class Container {
 
   get(name) {
     if (this.circularDependency.has(name)) {
-      const serviceInstance = this._services.get(name);
-      return new serviceInstance.definition();
+      throw `Circular dependency has been found for ${name} service.`;
     }
     if (this._services.has(name)) {
-      this.circularDependency.add(name);
       const serviceInstance = this._services.get(name);
       if (this._isClass(serviceInstance.definition)) {
         if (serviceInstance.singleton) {
@@ -34,13 +32,17 @@ class Container {
           if (singletonInstance) {
             return singletonInstance;
           } else {
+            this.circularDependency.add(name);
             const newSingletonInstance = this._createInstance(serviceInstance);
+            this.circularDependency.delete(name);
             this._singletons.set(name, newSingletonInstance);
             return newSingletonInstance;
           }
         }
-
-        return this._createInstance(serviceInstance);
+        this.circularDependency.add(name);
+        const instance = this._createInstance(serviceInstance);
+        this.circularDependency.delete(name);
+        return instance;
       } else {
         return serviceInstance.definition;
       }
